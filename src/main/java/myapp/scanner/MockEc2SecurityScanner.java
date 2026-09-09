@@ -73,7 +73,7 @@ public class MockEc2SecurityScanner implements SecurityScanner {
         findings.add(new SecurityFinding(
                 "CS-EC2-005",
                 "EC2 Termination Protection - i-demo123",
-                "INFO",
+                "WARNING",
                 "LOW",
                 "API termination protection is not enabled for EC2 instance i-demo123.",
                 "Consider enabling termination protection for important production instances."

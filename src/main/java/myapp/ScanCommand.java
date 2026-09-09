@@ -78,19 +78,25 @@ private boolean mock;
         defaultValue = "ALL"
 )
 private String severity;
+
+@Option(
+        names = "--cost",
+        description = "Run only Cost optimization checks"
+)
+private boolean cost;
     
     @Override
 public Integer call() {
 
-    boolean targetedScan = s3 || iam || ec2;
+    boolean targetedScan = s3 || iam || ec2 || vpc || cost;
 
     if (targetedScan && !security) {
 
         System.out.println();
         System.out.println("Invalid scan configuration.");
         System.out.println(
-                "Use --security when specifying --s3, --iam, or --ec2."
-        );
+        "Use --security when specifying --s3, --iam, --ec2, --vpc, or --cost."
+);
 
         return 4;
     }
@@ -118,7 +124,7 @@ System.out.println(
         "Region:     " + region
 );
 
-if (s3 || iam || ec2 || vpc) {
+if (s3 || iam || ec2 || vpc || cost) {
 
     StringBuilder targets = new StringBuilder();
 
@@ -139,8 +145,18 @@ if (s3 || iam || ec2 || vpc) {
         }
         targets.append("EC2");
     }
-    if (vpc) {
-    targets.append("VPC, ");
+  if (vpc) {
+    if (targets.length() > 0) {
+        targets.append(", ");
+    }
+    targets.append("VPC");
+}
+
+if (cost) {
+    if (targets.length() > 0) {
+        targets.append(", ");
+    }
+    targets.append("COST");
 }
 
     System.out.println(
@@ -150,7 +166,7 @@ if (s3 || iam || ec2 || vpc) {
 } else {
 
     System.out.println(
-            "Targets:    S3, IAM, EC2"
+            "Targets:    S3, IAM, EC2, VPC, COST"
     );
 }
 
@@ -163,6 +179,7 @@ System.out.println("----------------------------------------");
         iam,
         ec2,
         vpc,
+        cost,
         region,
         mock,
         severity

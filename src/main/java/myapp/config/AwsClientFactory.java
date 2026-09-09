@@ -5,6 +5,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.iam.IamClient;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.sts.StsClient;
 
 @Component
 public class AwsClientFactory {
@@ -23,6 +24,12 @@ public class AwsClientFactory {
 
     public Ec2Client createEc2Client(String region) {
         return Ec2Client.builder()
+                .region(Region.of(region))
+                .build();
+    }
+
+    public StsClient createStsClient(String region) {
+        return StsClient.builder()
                 .region(Region.of(region))
                 .build();
     }

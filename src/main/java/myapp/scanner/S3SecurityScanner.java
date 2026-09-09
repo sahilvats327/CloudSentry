@@ -17,6 +17,8 @@ import software.amazon.awssdk.services.s3.model.HeadBucketResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import software.amazon.awssdk.services.s3.model.GetBucketOwnershipControlsRequest;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.GetCallerIdentityRequest;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -26,10 +28,11 @@ import java.util.List;
 @Service
 public class S3SecurityScanner {
 
-    private S3Client s3Client;
+   private S3Client s3Client;
+   private StsClient stsClient;
 
-    private final AwsClientFactory awsClientFactory;
-    private final ObjectMapper objectMapper;
+private final AwsClientFactory awsClientFactory;
+private final ObjectMapper objectMapper;
 
     public S3SecurityScanner(
         S3Client s3Client,
@@ -43,11 +46,17 @@ public class S3SecurityScanner {
 
     public List<SecurityFinding> scan(String region) {
 
-        if (region != null && !region.isBlank()) {
-            s3Client = awsClientFactory.createS3Client(region);
-        }
+    if (region == null || region.isBlank()) {
+        region = "ap-south-1";
+    }
 
-        List<SecurityFinding> findings = new ArrayList<>();
+    s3Client =
+            awsClientFactory.createS3Client(region);
+
+    stsClient =
+            awsClientFactory.createStsClient(region);
+
+    List<SecurityFinding> findings = new ArrayList<>();
 
         System.out.println();
         System.out.println("[Security] S3 Bucket Checks");
@@ -313,21 +322,21 @@ public class S3SecurityScanner {
                 );
             }
 
-        } catch (Exception e) {
+       } catch (Exception e) {
 
-            System.out.println(
-                    "Encryption: NOT ENABLED         [WARNING]"
-            );
+    System.out.println(
+            "Encryption: Unable to check    [ERROR]"
+    );
 
-            return new SecurityFinding(
-                "CS-S3-002",
-                    "S3 Encryption",
-                    "WARNING",
-                    "HIGH",
-                    "Unable to confirm server-side encryption",
-                    "Verify that CloudSentry has permission to read the bucket encryption configuration."
-            );
-        }
+    return new SecurityFinding(
+            "CS-S3-002",
+            "S3 Encryption",
+            "ERROR",
+            "MEDIUM",
+            "Unable to confirm server-side encryption",
+            "Verify that CloudSentry has permission to read the bucket encryption configuration."
+    );
+}
     }
 
     private SecurityFinding checkVersioning(
@@ -494,10 +503,9 @@ public class S3SecurityScanner {
                 objectMapper.readTree(decodedPolicy);
 
         JsonNode statements =
-                root.get("Statement");
+        getPolicyStatements(root);
 
-        if (statements == null || !statements.isArray()) {
-
+if (statements == null) {
             System.out.println(
                     "HTTPS Enforcement: NOT CONFIRMED [WARNING]"
             );
@@ -703,9 +711,9 @@ public class S3SecurityScanner {
                 objectMapper.readTree(decodedPolicy);
 
         JsonNode statements =
-                root.get("Statement");
+        getPolicyStatements(root);
 
-        if (statements == null || !statements.isArray()) {
+if (statements == null) {
 
             System.out.println(
                     "Bucket Policy Public Access: NOT DETECTED [PASS]"
@@ -881,6 +889,29 @@ private SecurityFinding checkCrossAccountAccess(
 
     try {
 
+        /*
+         * Get the AWS account ID that CloudSentry
+         * is currently authenticated against.
+         */
+        String currentAccountId =
+                stsClient.getCallerIdentity(
+                        GetCallerIdentityRequest.builder()
+                                .build()
+                ).account();
+
+        if (currentAccountId == null
+                || currentAccountId.isBlank()) {
+
+            return new SecurityFinding(
+                    "CS-S3-007",
+                    "S3 Cross-Account Access",
+                    "ERROR",
+                    "MEDIUM",
+                    "Unable to determine the current AWS account ID.",
+                    "Verify that CloudSentry can call AWS STS GetCallerIdentity."
+            );
+        }
+
         GetBucketPolicyResponse response =
                 s3Client.getBucketPolicy(
                         GetBucketPolicyRequest.builder()
@@ -897,11 +928,11 @@ private SecurityFinding checkCrossAccountAccess(
             );
 
             return new SecurityFinding(
-                "CS-S3-007",
+                    "CS-S3-007",
                     "S3 Cross-Account Access",
                     "PASS",
                     "NONE",
-                    "No bucket policy granting cross-account access was detected",
+                    "No bucket policy granting cross-account access was detected.",
                     "No action required. Continue reviewing bucket policies regularly."
             );
         }
@@ -916,25 +947,26 @@ private SecurityFinding checkCrossAccountAccess(
                 objectMapper.readTree(decodedPolicy);
 
         JsonNode statements =
-                root.get("Statement");
+                getPolicyStatements(root);
 
-        if (statements == null || !statements.isArray()) {
+        if (statements == null) {
 
             System.out.println(
                     "Cross-Account Access: NOT DETECTED [PASS]"
             );
 
             return new SecurityFinding(
-                "CS-S3-007",
+                    "CS-S3-007",
                     "S3 Cross-Account Access",
                     "PASS",
                     "NONE",
-                    "No cross-account access statement was detected",
+                    "No analyzable cross-account policy statement was detected.",
                     "No action required. Continue reviewing bucket policies regularly."
             );
         }
 
         boolean crossAccountDetected = false;
+        String crossAccountPrincipal = "";
 
         for (JsonNode statement : statements) {
 
@@ -953,13 +985,35 @@ private SecurityFinding checkCrossAccountAccess(
             }
 
             /*
-             * Principal: {"AWS": "arn:aws:iam::ACCOUNT_ID:root"}
+             * Principal can be:
              *
-             * We flag explicit AWS account principals.
-             * Public "*" access is handled separately.
+             * "arn:aws:iam::123456789012:root"
+             *
+             * or:
+             *
+             * {
+             *     "AWS": "arn:aws:iam::123456789012:root"
+             * }
+             *
+             * or:
+             *
+             * {
+             *     "AWS": [
+             *         "arn:aws:iam::123456789012:root"
+             *     ]
+             * }
              */
 
-            if (principal.isObject()) {
+            List<String> awsPrincipals =
+                    new ArrayList<>();
+
+            if (principal.isTextual()) {
+
+                awsPrincipals.add(
+                        principal.asText()
+                );
+
+            } else if (principal.isObject()) {
 
                 JsonNode awsPrincipal =
                         principal.get("AWS");
@@ -968,30 +1022,20 @@ private SecurityFinding checkCrossAccountAccess(
 
                     if (awsPrincipal.isTextual()) {
 
-                        String value =
-                                awsPrincipal.asText();
+                        awsPrincipals.add(
+                                awsPrincipal.asText()
+                        );
 
-                        if (value.startsWith(
-                                "arn:aws:iam::")) {
-
-                            crossAccountDetected = true;
-                            break;
-                        }
-                    }
-
-                    if (awsPrincipal.isArray()) {
+                    } else if (awsPrincipal.isArray()) {
 
                         for (JsonNode principalValue :
                                 awsPrincipal) {
 
-                            String value =
-                                    principalValue.asText();
+                            if (principalValue.isTextual()) {
 
-                            if (value.startsWith(
-                                    "arn:aws:iam::")) {
-
-                                crossAccountDetected = true;
-                                break;
+                                awsPrincipals.add(
+                                        principalValue.asText()
+                                );
                             }
                         }
                     }
@@ -999,19 +1043,39 @@ private SecurityFinding checkCrossAccountAccess(
             }
 
             /*
-             * Principal can also directly contain
-             * an AWS ARN as a string.
+             * Compare every explicit AWS account principal
+             * against the account CloudSentry is running in.
              */
+            for (String principalArn :
+                    awsPrincipals) {
 
-            if (principal.isTextual()) {
-
-                String value =
-                        principal.asText();
-
-                if (value.startsWith(
+                if (!principalArn.startsWith(
                         "arn:aws:iam::")) {
 
+                    continue;
+                }
+
+                String[] arnParts =
+                        principalArn.split(":");
+
+                if (arnParts.length < 5) {
+                    continue;
+                }
+
+                String principalAccountId =
+                        arnParts[4];
+
+                /*
+                 * Only report the finding when the
+                 * principal belongs to another account.
+                 */
+                if (!currentAccountId.equals(
+                        principalAccountId)) {
+
                     crossAccountDetected = true;
+                    crossAccountPrincipal =
+                            principalArn;
+
                     break;
                 }
             }
@@ -1028,12 +1092,13 @@ private SecurityFinding checkCrossAccountAccess(
             );
 
             return new SecurityFinding(
-                "CS-S3-007",
+                    "CS-S3-007",
                     "S3 Cross-Account Access",
                     "WARNING",
                     "MEDIUM",
-                    "Bucket policy grants access to an explicit AWS account principal",
-                    "Verify that the cross-account access is intentional and restrict permissions to only the required AWS accounts, roles, or resources."
+                    "Bucket policy grants access to an AWS principal from another account: "
+                            + crossAccountPrincipal,
+                    "Verify that the cross-account access is intentional and restrict permissions to only the required AWS account, role, or resource."
             );
         }
 
@@ -1046,7 +1111,7 @@ private SecurityFinding checkCrossAccountAccess(
                 "S3 Cross-Account Access",
                 "PASS",
                 "NONE",
-                "No explicit cross-account AWS principal was detected",
+                "No explicit cross-account AWS principal was detected.",
                 "No action required. Continue reviewing bucket policies regularly."
         );
 
@@ -1060,11 +1125,11 @@ private SecurityFinding checkCrossAccountAccess(
             );
 
             return new SecurityFinding(
-                "CS-S3-007",
+                    "CS-S3-007",
                     "S3 Cross-Account Access",
                     "ERROR",
                     "MEDIUM",
-                    "Unable to read the bucket policy because access was denied",
+                    "Unable to read the bucket policy because access was denied.",
                     "Grant CloudSentry permission to read S3 bucket policies."
             );
         }
@@ -1076,11 +1141,11 @@ private SecurityFinding checkCrossAccountAccess(
             );
 
             return new SecurityFinding(
-                "CS-S3-007",
+                    "CS-S3-007",
                     "S3 Cross-Account Access",
                     "PASS",
                     "NONE",
-                    "No bucket policy is configured",
+                    "No bucket policy is configured.",
                     "No action required. Continue using least-privilege access controls."
             );
         }
@@ -1094,7 +1159,7 @@ private SecurityFinding checkCrossAccountAccess(
                 "S3 Cross-Account Access",
                 "ERROR",
                 "MEDIUM",
-                "Unable to determine whether cross-account access is configured",
+                "Unable to determine whether cross-account access is configured.",
                 "Verify that CloudSentry has permission to read the bucket policy."
         );
 
@@ -1109,12 +1174,11 @@ private SecurityFinding checkCrossAccountAccess(
                 "S3 Cross-Account Access",
                 "ERROR",
                 "MEDIUM",
-                "Unable to parse or analyze the bucket policy",
-                "Verify that the bucket policy is valid JSON and can be read by CloudSentry."
+                "Unable to parse or analyze the bucket policy or determine the current AWS account.",
+                "Verify that the bucket policy is valid JSON and that CloudSentry can access AWS STS and S3 bucket policies."
         );
     }
 }
-
 // =========================================================
 // S3 OBJECT OWNERSHIP CHECK
 // =========================================================
@@ -1131,10 +1195,12 @@ private SecurityFinding checkObjectOwnership(
                                 .build()
                 );
 
-        var rules =
-                response.ownershipControls().rules();
+        var ownershipControls =
+                response.ownershipControls();
 
-        if (rules == null || rules.isEmpty()) {
+        if (ownershipControls == null
+                || ownershipControls.rules() == null
+                || ownershipControls.rules().isEmpty()) {
 
             System.out.println(
                     "Object Ownership: NOT CONFIGURED [WARNING]"
@@ -1149,6 +1215,9 @@ private SecurityFinding checkObjectOwnership(
                     "Configure S3 Object Ownership and prefer BucketOwnerEnforced to eliminate ACL-based ownership issues."
             );
         }
+
+        var rules =
+                ownershipControls.rules();
 
         String ownership =
                 rules.get(0).objectOwnershipAsString();
@@ -1251,6 +1320,7 @@ private SecurityFinding checkObjectOwnership(
                 "Verify that the bucket supports Ownership Controls and that CloudSentry has the required permissions."
         );
     }
+
 }
 // =========================================================
 // S3 PUBLIC WRITE / DELETE ACCESS CHECK
@@ -1296,9 +1366,9 @@ private SecurityFinding checkPublicWriteDeleteAccess(
                 objectMapper.readTree(decodedPolicy);
 
         JsonNode statements =
-                root.get("Statement");
+        getPolicyStatements(root);
 
-        if (statements == null || !statements.isArray()) {
+if (statements == null) {
 
             return new SecurityFinding(
                     "CS-S3-009",
@@ -1501,6 +1571,25 @@ private boolean isWriteDeleteAction(String action) {
             || normalized.equals("s3:deletebucketpolicy")
             || normalized.equals("s3:*")
             || normalized.equals("*");
+}
+
+private JsonNode getPolicyStatements(JsonNode root) {
+
+    JsonNode statements = root.get("Statement");
+
+    if (statements == null) {
+        return null;
+    }
+
+    if (statements.isArray()) {
+        return statements;
+    }
+
+    if (statements.isObject()) {
+        return objectMapper.createArrayNode().add(statements);
+    }
+
+    return null;
 }
 }
 

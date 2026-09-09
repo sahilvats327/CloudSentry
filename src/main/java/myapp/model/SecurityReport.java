@@ -12,6 +12,7 @@ public class SecurityReport {
     private final String timestamp;
     private final int totalFindings;
     private final int passed;
+    private final int informational;
     private final int warnings;
     private final int errors;
     private final int highRisk;
@@ -29,6 +30,7 @@ public class SecurityReport {
             String timestamp,
             int totalFindings,
             int passed,
+            int informational,
             int warnings,
             int errors,
             int highRisk,
@@ -45,6 +47,7 @@ public class SecurityReport {
         this.timestamp = timestamp;
         this.totalFindings = totalFindings;
         this.passed = passed;
+        this.informational = informational;
         this.warnings = warnings;
         this.errors = errors;
         this.highRisk = highRisk;
@@ -70,7 +73,7 @@ public class SecurityReport {
     public String getTargets() {
     return targets;
     }
-    
+
     public String getTimestamp() {
         return timestamp;
     }
@@ -82,6 +85,9 @@ public class SecurityReport {
     public int getPassed() {
         return passed;
     }
+    public int getInformational() {
+    return informational;
+   }
 
     public int getWarnings() {
         return warnings;

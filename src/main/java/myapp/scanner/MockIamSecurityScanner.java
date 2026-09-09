@@ -2,12 +2,15 @@ package myapp.scanner;
 
 import myapp.model.SecurityFinding;
 import org.springframework.stereotype.Service;
-
+import org.springframework.beans.factory.annotation.Value;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class MockIamSecurityScanner implements SecurityScanner {
+
+    @Value("${cloudsentry.iam.access-key-age-days:90}")
+private int accessKeyAgeDays;
 
     @Override
     public List<SecurityFinding> scan(String region) {
@@ -50,7 +53,7 @@ public class MockIamSecurityScanner implements SecurityScanner {
                 "IAM Access Key Age - " + user,
                 "WARNING",
                 "MEDIUM",
-                "Access key is older than 90 days.",
+                "Access key is older than " + accessKeyAgeDays + " days.",
                 "Rotate the access key."
         ));
 

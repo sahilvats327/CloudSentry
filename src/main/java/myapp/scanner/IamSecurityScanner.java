@@ -25,6 +25,7 @@ import myapp.config.AwsClientFactory;
 import software.amazon.awssdk.services.iam.model.GetAccountSummaryRequest;
 import software.amazon.awssdk.services.iam.model.GetAccountSummaryResponse;
 import software.amazon.awssdk.services.iam.model.ListUserPoliciesRequest;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -39,6 +40,17 @@ public class IamSecurityScanner implements SecurityScanner {
    private IamClient iamClient;
 private final ObjectMapper objectMapper;
 private final AwsClientFactory awsClientFactory;
+@Value("${cloudsentry.iam.access-key-age-days:90}")
+private int accessKeyAgeDays;
+
+@Value("${cloudsentry.iam.unused-key-days:90}")
+private int unusedKeyDays;
+
+@Value("${cloudsentry.iam.max-active-access-keys:2}")
+private int maxActiveAccessKeys;
+
+@Value("${cloudsentry.iam.minimum-password-length:12}")
+private int minimumPasswordLength;
 
    public IamSecurityScanner(
         IamClient iamClient,
@@ -71,12 +83,13 @@ private final AwsClientFactory awsClientFactory;
                 System.out.println("IAM Users: None found");
 
                 findings.add(new SecurityFinding(
-                        "IAM Users",
-                        "PASS",
-                        "NONE",
-                        "No IAM users were found in the account",
-                        "No action required."
-                ));
+        "CS-IAM-014",
+        "IAM Users",
+        "PASS",
+        "NONE",
+        "No IAM users were found in the account",
+        "No action required."
+));
 
                 return findings;
             }
@@ -118,12 +131,13 @@ private final AwsClientFactory awsClientFactory;
             );
 
             findings.add(new SecurityFinding(
-                    "IAM Users",
-                    "ERROR",
-                    "MEDIUM",
-                    "Unable to retrieve IAM users",
-                    "Verify that CloudSentry has permission to list IAM users."
-            ));
+        "CS-IAM-014",
+        "IAM Users",
+        "ERROR",
+        "MEDIUM",
+        "Unable to retrieve IAM users",
+        "Verify that CloudSentry has permission to list IAM users."
+));
         }
 
         return findings;
@@ -258,6 +272,7 @@ private void checkRootAccountSecurity(
         );
 
         findings.add(new SecurityFinding(
+                "CS-IAM-001",
                 "IAM Root Account Security",
                 "ERROR",
                 "MEDIUM",
@@ -366,7 +381,7 @@ if ("Inactive".equalsIgnoreCase(key.statusAsString())) {
     }
 }
 
-if (activeKeyCount >= 2) {
+if (activeKeyCount >= maxActiveAccessKeys) {
 
     System.out.println(
             "Active Access Keys: "
@@ -406,7 +421,7 @@ if (activeKeyCount >= 2) {
                     ChronoUnit.DAYS.between(key.createDate(), Instant.now());
 
             // Check key age
-            if (ageInDays > 90) {
+            if (ageInDays > accessKeyAgeDays) {
                 System.out.println(
                         "Access Key Age: " + ageInDays + " days        [WARNING]"
                 );
@@ -416,7 +431,7 @@ if (activeKeyCount >= 2) {
         "IAM Access Key Age - " + username,
         "WARNING",
         "MEDIUM",
-        "An access key is older than 90 days",
+        "An access key is older than " + accessKeyAgeDays + " days",
         "Rotate or replace old access keys regularly and remove unused keys."
 ));
             } else {
@@ -429,7 +444,9 @@ if (activeKeyCount >= 2) {
                         "IAM Access Key Age - " + username,
                         "PASS",
                         "NONE",
-                        "Access key age is within the recommended 90-day rotation period",
+                "Access key age is within the recommended "
+        + accessKeyAgeDays
+        + "-day rotation period",
                         "Continue rotating access keys regularly."
                 ));
             }
@@ -467,8 +484,7 @@ if (activeKeyCount >= 2) {
                                     Instant.now()
                             );
 
-                    if (unusedDays > 90) {
-
+if (unusedDays > unusedKeyDays) {
                         System.out.println(
                                 "Access Key Usage: " + unusedDays +
                                 " days ago       [WARNING]"
@@ -479,7 +495,9 @@ if (activeKeyCount >= 2) {
         "IAM Access Key Usage - " + username,
         "WARNING",
         "MEDIUM",
-        "An access key has not been used for more than 90 days",
+        "An access key has not been used for more than "
+        + unusedKeyDays
+        + " days",
         "Disable or remove unused access keys and rotate credentials regularly."
 ));
 
@@ -495,7 +513,9 @@ if (activeKeyCount >= 2) {
         "IAM Access Key Usage - " + username,
         "PASS",
         "NONE",
-        "An access key has been used within the last 90 days",
+        "An access key has been used within the last "
+        + unusedKeyDays
+        + " days",
         "Continue monitoring access key usage and rotate credentials regularly."
 ));
                     }
@@ -525,6 +545,7 @@ if (activeKeyCount >= 2) {
         );
 
         findings.add(new SecurityFinding(
+                "CS-IAM-004",
                 "IAM Access Keys - " + username,
                 "ERROR",
                 "MEDIUM",
@@ -643,22 +664,8 @@ boolean privilegeEscalationAction =
             "Restrict privilege-sensitive IAM actions such as iam:PassRole and policy-management actions to only the identities and resources that require them."
     ));
 
-    } else if (privilegeEscalationAction) {
+   
 
-    System.out.println(
-            "Policy Document: Privilege escalation action [HIGH]"
-    );
-
-    findings.add(new SecurityFinding(
-            "CS-IAM-013",
-            "IAM Privilege Escalation Risk - " + username,
-            "WARNING",
-            "HIGH",
-            "Policy '" + policyName
-                    + "' contains an IAM action that can enable privilege escalation.",
-            "Restrict privilege-sensitive IAM actions such as iam:PassRole and policy-management actions to only the identities and resources that require them."
-    ));
-    
             } else if (serviceWildcard) {
 
                 System.out.println(
@@ -797,6 +804,7 @@ boolean privilegeEscalationAction =
             );
 
             findings.add(new SecurityFinding(
+                "CS-IAM-007",
                     "IAM Policies - " + username,
                     "ERROR",
                     "MEDIUM",
@@ -901,6 +909,7 @@ private void checkGroupPolicies(
         );
 
         findings.add(new SecurityFinding(
+                "CS-IAM-008",
                 "IAM Group Policies - " + username,
                 "ERROR",
                 "MEDIUM",
@@ -1354,11 +1363,11 @@ private boolean isPrivilegeEscalationAction(
                     policy.requireSymbols();
 
             boolean strongPasswordPolicy =
-                    minimumLength >= 12
-                            && uppercase
-                            && lowercase
-                            && numbers
-                            && symbols;
+        minimumLength >= minimumPasswordLength
+                && uppercase
+                && lowercase
+                && numbers
+                && symbols;
 
             if (strongPasswordPolicy) {
 
@@ -1387,7 +1396,9 @@ private boolean isPrivilegeEscalationAction(
                         "WARNING",
                         "MEDIUM",
                         "Account password policy does not meet the recommended baseline",
-                        "Use a minimum password length of 12 characters and require uppercase, lowercase, numbers, and symbols."
+                        "Use a minimum password length of "
+        + minimumPasswordLength
+        + " characters and require uppercase, lowercase, numbers, and symbols."
                 ));
             }
 

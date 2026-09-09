@@ -3,6 +3,7 @@ package myapp.model;
 public class ScanSummary {
 
     private final int passed;
+    private final int informational;
     private final int warnings;
     private final int errors;
     private final int highRisk;
@@ -13,6 +14,7 @@ public class ScanSummary {
 
     public ScanSummary(
             int passed,
+            int informational,
             int warnings,
             int errors,
             int highRisk,
@@ -22,6 +24,7 @@ public class ScanSummary {
             String riskLevel) {
 
         this.passed = passed;
+        this.informational = informational;
         this.warnings = warnings;
         this.errors = errors;
         this.highRisk = highRisk;
@@ -33,6 +36,10 @@ public class ScanSummary {
 
     public int getPassed() {
         return passed;
+    }
+
+    public int getInformational() {
+        return informational;
     }
 
     public int getWarnings() {

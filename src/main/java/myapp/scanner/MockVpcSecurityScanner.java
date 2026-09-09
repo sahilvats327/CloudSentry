@@ -40,12 +40,11 @@ public class MockVpcSecurityScanner implements SecurityScanner {
         "CS-VPC-002",
         "VPC Internet Gateway - igw-demo123",
         "INFO",
-        "LOW",
+        "NONE",
         "VPC vpc-demo123 has an attached Internet Gateway igw-demo123, enabling internet connectivity.",
         "Verify that only intended public subnets and resources use internet-facing routes through this gateway."
-    )
-);
-
+)
+        );
 findings.add(
     new SecurityFinding(
         "CS-VPC-003",
@@ -68,16 +67,65 @@ findings.add(
     )
 );
 
-findings.add(
-    new SecurityFinding(
-        "CS-VPC-005",
-        "VPC Flow Logs",
-        "WARNING",
-        "MEDIUM",
-        "No active VPC Flow Log configuration was detected.",
-        "Enable VPC Flow Logs for critical VPCs to improve network visibility, investigation, and security monitoring."
-    )
+// CS-VPC-005 — VPC Flow Logs
+System.out.println();
+System.out.println("----------------------------------------");
+System.out.println("       VPC Flow Logs Checks");
+System.out.println("----------------------------------------");
+
+// Mock VPC 1 — Flow Logs ACTIVE
+System.out.println(
+        "VPC: vpc-demo123"
+                + " | Flow Logs: ACTIVE [PASS]"
 );
+
+findings.add(
+        new SecurityFinding(
+                "CS-VPC-005",
+                "VPC Flow Logs - vpc-demo123",
+                "PASS",
+                "NONE",
+                "An active VPC Flow Log configuration was detected for VPC vpc-demo123.",
+                "No action required. Continue monitoring network traffic for this VPC."
+        )
+);
+
+// Mock VPC 2 — Flow Logs NOT ACTIVE
+System.out.println(
+        "VPC: vpc-demo456"
+                + " | Flow Logs: NOT ACTIVE [MEDIUM]"
+);
+
+findings.add(
+        new SecurityFinding(
+                "CS-VPC-005",
+                "VPC Flow Logs - vpc-demo456",
+                "WARNING",
+                "MEDIUM",
+                "No active VPC Flow Log configuration was detected for VPC vpc-demo456.",
+                "Enable VPC Flow Logs for this VPC to improve network visibility, investigation, and security monitoring."
+        )
+);
+
+// Mock VPC 3 — Flow Logs ACTIVE
+System.out.println(
+        "VPC: vpc-demo789"
+                + " | Flow Logs: ACTIVE [PASS]"
+);
+
+findings.add(
+        new SecurityFinding(
+                "CS-VPC-005",
+                "VPC Flow Logs - vpc-demo789",
+                "PASS",
+                "NONE",
+                "An active VPC Flow Log configuration was detected for VPC vpc-demo789.",
+                "No action required. Continue monitoring network traffic for this VPC."
+        )
+);
+
+System.out.println("VPCs Checked: 3");
+System.out.println("VPCs with Active Flow Logs: 2");
 
 findings.add(
     new SecurityFinding(
