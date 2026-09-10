@@ -1,68 +1,77 @@
 # CloudSentry
 
-CloudSentry is an AWS cloud security scanning CLI built with **Java, Spring Boot, AWS SDK for Java, and Picocli**.
+**CloudSentry** is an AWS cloud security and reliability scanning CLI built with **Java, Spring Boot, AWS SDK for Java, and Picocli**.
 
-It analyzes AWS cloud configurations across **IAM, S3, EC2, VPC, and Cost** to identify potential security and configuration risks.
+It analyzes AWS configurations across **IAM, S3, EC2, VPC, Cost, and Reliability** to identify potential security, configuration, availability, and resilience risks.
 
-CloudSentry generates security findings with **severity levels, recommendations, risk scoring, and security reports**. It also provides an **offline/mock scanning mode** for development, testing, and demonstrations without requiring access to a live AWS environment.
+CloudSentry converts detected issues into structured **security findings**, assigns severity levels, calculates an overall **security score and risk level**, and generates **JSON and HTML security reports**.
+
+The project also provides an **offline/mock scanning mode**, allowing the complete scanning and reporting workflow to be demonstrated without requiring access to a live AWS environment.
 
 ---
 
-## Features
+# 🚀 Features
 
 * AWS security scanning using AWS SDK for Java
-* Offline/mock scanning mode for development and demonstration
+* Offline/mock scanning mode
 * IAM security analysis
 * S3 security analysis
 * EC2 security analysis
 * VPC security analysis
-* Cost and cloud resource risk analysis
+* Cloud cost/resource risk analysis
+* Reliability and availability analysis
+* RDS Multi-AZ checks
+* S3 lifecycle checks
+* EC2 Auto Scaling checks
 * HIGH, MEDIUM, and LOW severity classification
+* Centralized risk evaluation
 * Overall security score
 * Overall risk level
-* Security finding recommendations
+* Security recommendations
 * Severity-based filtering
-* JSON security report generation
-* HTML security report generation
-* CLI exit codes for security automation
-* Spring Boot based architecture
+* JSON security reports
+* HTML security reports
+* CLI-based scanning
+* CLI exit codes for automation
+* Spring Boot architecture
 * Picocli command-line interface
 * Modular scanner architecture
-* Automated unit testing for risk evaluation
+* Mock scanner implementations
+* Automated unit testing
 
 ---
 
-# Security Coverage
+# 🔐 Security Coverage
 
 ## IAM Security
 
 CloudSentry analyzes IAM configurations for common identity and access-management risks.
 
-Current checks include:
+Current IAM checks include:
 
 * Root account MFA
-* Root access keys
+* Root account access keys
 * User MFA
 * Access key age
 * Access key usage
 * Inline IAM policies
-* Managed IAM policies
+* Attached IAM policies
 * Group policies
 * Password policy
-* AdministratorAccess
+* Administrator-level permissions
 * Multiple active access keys
 * Inactive access keys
-* Privilege escalation actions
+* Potentially dangerous IAM actions
 
-These checks help identify excessive privileges, weak authentication configurations, and potentially risky IAM access patterns.
+These checks help identify weak authentication configurations, excessive permissions, and potentially risky access patterns.
 
 ---
 
-## S3 Security
+## 🪣 S3 Security
 
-CloudSentry analyzes Amazon S3 bucket security configurations.
+CloudSentry analyzes Amazon S3 bucket configurations for common security risks.
 
-Current checks include:
+Current S3 security checks include:
 
 * Public access block configuration
 * Bucket encryption
@@ -74,75 +83,162 @@ Current checks include:
 * Object ownership
 * Public write/delete access
 
-These checks help identify publicly exposed buckets, missing encryption, insecure policies, and other common S3 configuration risks.
+These checks help identify potentially exposed buckets, missing security controls, and insecure access configurations.
 
 ---
 
-## EC2 Security
+## 💻 EC2 Security
 
-CloudSentry analyzes Amazon EC2 instances, security groups, EBS volumes, snapshots, and AMIs.
+CloudSentry analyzes EC2 infrastructure and related security configurations.
 
-Current checks include:
+Current EC2 security checks include:
 
 * Public security group access
-* EBS volume encryption
+* Sensitive port exposure
 * Public IP exposure
-* IMDSv2 enforcement
+* EBS volume encryption
+* IMDSv2 configuration
 * Termination protection
 * Public EBS snapshots
-* EBS snapshot encryption
-* Sensitive port exposure
+* Snapshot encryption
 * Unrestricted outbound traffic
 * Public IPv6 security-group access
 * Public AMI exposure
 * Unencrypted EBS volumes
 
-These checks help identify publicly exposed infrastructure and insecure compute and storage configurations.
+These checks help identify publicly exposed compute resources and insecure storage or network configurations.
 
 ---
 
-## VPC Security
+## 🌐 VPC Security
 
-CloudSentry analyzes Amazon VPC networking configurations.
+CloudSentry analyzes VPC networking configurations for potentially exposed resources.
 
-Current checks include:
+Current VPC checks include:
 
 * Public subnet exposure
 * Internet Gateway detection
 * Default security group exposure
-* Network ACL exposure
+* Network ACL configuration
 * VPC Flow Logs
 * Public IPv6 routes
 
-These checks help identify potentially exposed network resources and missing network-level security controls.
+These checks provide visibility into common network-level security risks.
 
 ---
 
-## Cost Security
+# 🔄 Reliability & Availability
 
-CloudSentry also performs cloud cost-related security and configuration analysis.
+CloudSentry includes a dedicated **ReliabilitySecurityScanner** that analyzes AWS configurations related to availability, resilience, and workload recovery.
 
-The cost scanner is designed to identify potentially risky or unnecessary cloud-resource configurations that may contribute to unexpected AWS costs.
+The reliability scanner currently performs three checks.
 
-Cost analysis is integrated into the same scanning and risk-evaluation architecture as the security scanners.
+---
+
+## RDS Multi-AZ — `CS-REL-001`
+
+Checks whether Amazon RDS database instances have **Multi-AZ deployment** enabled.
+
+A database without Multi-AZ may have reduced availability during an Availability Zone failure.
+
+### Findings
+
+* **MEDIUM** — Multi-AZ is disabled
+* **PASS** — Multi-AZ is enabled
+* **HIGH** — CloudSentry cannot determine the configuration because of a scanning error
+
+### Recommendation
+
+Enable Multi-AZ for production RDS workloads that require high availability.
+
+---
+
+## S3 Lifecycle — `CS-REL-002`
+
+Checks whether S3 buckets have a **lifecycle configuration**.
+
+Lifecycle policies can help manage object retention, transition objects between storage classes, and automatically expire objects according to workload requirements.
+
+### Findings
+
+* **MEDIUM** — No lifecycle policy detected
+* **PASS** — Lifecycle configuration exists
+* **HIGH** — CloudSentry cannot determine the lifecycle configuration because of a scanning error
+
+### Recommendation
+
+Configure an appropriate S3 lifecycle policy based on the workload's retention and storage requirements.
+
+---
+
+## EC2 Auto Scaling — `CS-REL-003`
+
+Checks whether EC2 instances are members of an **Auto Scaling Group**.
+
+Instances that are not managed by Auto Scaling may not automatically recover or scale when required.
+
+### Findings
+
+* **MEDIUM** — EC2 instance is not in an Auto Scaling Group
+* **PASS** — EC2 instance belongs to an Auto Scaling Group
+* **HIGH** — CloudSentry cannot determine Auto Scaling membership because of a scanning error
+
+### Recommendation
+
+For workloads requiring high availability and automatic recovery, consider placing EC2 instances in an appropriate Auto Scaling Group.
+
+---
+
+## Reliability Scanner Architecture
+
+```text
+                ReliabilitySecurityScanner
+                           |
+             +-------------+-------------+
+             |             |             |
+             v             v             v
+            RDS           S3            EC2
+          Multi-AZ     Lifecycle     Auto Scaling
+             |             |             |
+             +-------------+-------------+
+                           |
+                    SecurityFinding
+                           |
+                       Risk Engine
+```
+
+The reliability scanner uses the same `SecurityFinding` model as the other CloudSentry scanners, allowing reliability findings to participate in the same reporting and risk-evaluation pipeline.
+
+---
+
+# 💰 Cost Security
+
+CloudSentry also includes cloud cost and resource-risk analysis.
+
+The cost scanner is designed to identify potentially unnecessary or risky cloud-resource configurations that may contribute to unexpected AWS costs.
+
+Cost analysis is integrated into the same scanning and risk-evaluation architecture as the other scanners.
 
 CloudSentry also provides a **Mock Cost Scanner** for demonstrations and offline testing.
 
 ---
 
-# Risk Engine
+# 📊 Risk Engine
 
 CloudSentry uses a centralized **Risk Engine** to evaluate security findings.
 
-Each finding is classified according to its severity:
+Each finding is assigned a severity level:
 
-* **HIGH** — Critical or potentially dangerous configuration
-* **MEDIUM** — Significant security or configuration weakness
-* **LOW** — Lower-risk issue or recommended improvement
+| Severity   | Meaning                                         |
+| ---------- | ----------------------------------------------- |
+| **HIGH**   | Critical or potentially dangerous configuration |
+| **MEDIUM** | Significant security or configuration weakness  |
+| **LOW**    | Lower-risk issue or recommended improvement     |
+| **PASS**   | Configuration passed the relevant check         |
 
-The Risk Engine combines security findings into an overall security assessment.
+The Risk Engine aggregates findings and produces an overall security assessment.
 
-The final report includes:
+The final assessment includes:
 
 * Total findings
 * HIGH findings
@@ -152,17 +248,22 @@ The final report includes:
 * Overall risk level
 * Individual recommendations
 
-This allows users to quickly understand the overall security posture of the scanned environment.
+This provides a consolidated view of the scanned environment's security and configuration posture.
 
 ---
 
-# Scan Modes
+# 🧪 Scan Modes
 
-CloudSentry supports two primary scanning approaches.
+CloudSentry supports two primary scanning approaches:
+
+1. **Mock / Offline Scanning**
+2. **AWS Scanning**
+
+---
 
 ## Mock / Offline Mode
 
-Mock mode allows CloudSentry to run without connecting to a live AWS environment.
+Mock mode allows CloudSentry to execute the scanning pipeline without connecting to a live AWS environment.
 
 This is useful for:
 
@@ -173,27 +274,56 @@ This is useful for:
 * CI/testing environments
 * Demonstrating security findings without AWS credentials
 
-Example:
+### Run a mock scan
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.arguments="scan --mock"
 ```
 
-Mock scanners simulate AWS security findings for the supported services.
+### Run a security-focused mock scan
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments="scan --security --mock"
+```
+
+Mock scanners generate simulated findings for supported scanning areas.
+
+This allows the complete pipeline to be demonstrated:
+
+```text
+Scan
+  ↓
+Scanner Execution
+  ↓
+Security Findings
+  ↓
+Risk Engine
+  ↓
+Security Score
+  ↓
+Reports
+```
 
 ---
 
-## AWS Scan Mode
+# ☁️ AWS Scan Mode
 
-CloudSentry can also use the **AWS SDK for Java** to inspect real AWS resources.
+CloudSentry can use the **AWS SDK for Java** to inspect real AWS resources.
 
-The AWS scanning architecture uses AWS services and APIs to retrieve configuration information and evaluate it against security checks.
+The AWS scanning architecture retrieves configuration information from AWS services and evaluates the configuration against CloudSentry checks.
 
-AWS credentials and permissions must be configured correctly before running a live scan.
+Before running a live scan, ensure that:
+
+* AWS credentials are configured
+* The AWS account is active
+* Required IAM permissions are available
+* An AWS region is configured
+
+> **Security:** Never commit AWS access keys, secret keys, passwords, or other credentials to the repository.
 
 ---
 
-# Architecture
+# 🏗️ Architecture
 
 ```text
                          CloudSentry CLI
@@ -210,22 +340,34 @@ AWS credentials and permissions must be configured correctly before running a li
           |          |          |          |        |
           +----------+----------+----------+--------+
                                |
-                        Security Findings
+                       Reliability Scanner
+                               |
+                     +---------+---------+
+                     |         |         |
+                    RDS       S3        EC2
+                  Multi-AZ  Lifecycle  Auto Scaling
+                               |
+                               v
+                      Security Findings
                                |
                           Risk Engine
                                |
-                    +----------+----------+
-                    |                     |
-              Console Report         ReportService
-                                          |
-                                +---------+---------+
-                                |                   |
-                           JSON Report         HTML Report
+                  +------------+------------+
+                  |                         |
+            Console Output            ReportService
+                                            |
+                                  +---------+---------+
+                                  |                   |
+                              JSON Report        HTML Report
 ```
+
+CloudSentry separates service-specific scanning logic from the central scanning, risk-evaluation, and reporting components.
+
+This modular structure allows additional scanners and security checks to be added without redesigning the complete application.
 
 ---
 
-# Project Structure
+# 📁 Project Structure
 
 ```text
 CloudSentry/
@@ -234,8 +376,7 @@ CloudSentry/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── myapp/
-│   │   │       ├── ScanCommand.java
-│   │   │       │
+│   │   │
 │   │   │       ├── config/
 │   │   │       │   └── AwsClientFactory.java
 │   │   │       │
@@ -253,7 +394,8 @@ CloudSentry/
 │   │   │       │   ├── VpcSecurityScanner.java
 │   │   │       │   ├── MockVpcSecurityScanner.java
 │   │   │       │   ├── CostSecurityScanner.java
-│   │   │       │   └── MockCostSecurityScanner.java
+│   │   │       │   ├── MockCostSecurityScanner.java
+│   │   │       │   └── ReliabilitySecurityScanner.java
 │   │   │       │
 │   │   │       ├── service/
 │   │   │       │   ├── ScanService.java
@@ -279,61 +421,68 @@ CloudSentry/
 
 ---
 
-# Technologies Used
+# 🛠️ Technologies Used
 
-| Technology       | Purpose                               |
-| ---------------- | ------------------------------------- |
-| Java             | Core application development          |
-| Spring Boot      | Application framework                 |
-| AWS SDK for Java | AWS resource and configuration access |
-| Picocli          | Command-line interface                |
-| Maven            | Build and dependency management       |
-| JUnit            | Unit testing                          |
-| HTML/CSS         | Security report presentation          |
-| JSON             | Security report data format           |
+| Technology           | Purpose                               |
+| -------------------- | ------------------------------------- |
+| **Java**             | Core application development          |
+| **Spring Boot**      | Application framework                 |
+| **AWS SDK for Java** | AWS resource and configuration access |
+| **Picocli**          | Command-line interface                |
+| **Maven**            | Build and dependency management       |
+| **JUnit**            | Automated testing                     |
+| **HTML/CSS**         | Security report presentation          |
+| **JSON**             | Machine-readable security reports     |
 
 ---
 
-# AWS Services
+# ☁️ AWS Services
 
-CloudSentry is designed to interact with AWS services and configurations including:
+CloudSentry currently analyzes configurations associated with:
 
-* **AWS Identity and Access Management (IAM)**
+* **AWS IAM**
 * **Amazon S3**
 * **Amazon EC2**
 * **Amazon VPC**
+* **Amazon RDS**
+* **Amazon EC2 Auto Scaling**
 * AWS networking and security configurations
-* AWS cost/resource information
+* AWS cloud resource and cost information
 
-The exact AWS permissions required depend on the scanners and checks being executed.
-
----
-
-# Requirements
-
-Before running CloudSentry in live AWS mode, make sure you have:
-
-* Java JDK installed
-* Maven installed
-* AWS CLI installed
-* AWS credentials configured
-* Appropriate AWS IAM permissions
-* An AWS region configured
-
-For development and demonstrations, AWS credentials are **not required when using mock mode**.
+The exact AWS permissions required depend on the scanner and checks being executed.
 
 ---
 
-# Build the Project
+# ⚙️ Requirements
 
-Clone the repository and move into the project directory:
+## Development
+
+* Java JDK
+* Maven
+* Git
+
+## Live AWS scanning
+
+* AWS CLI
+* Configured AWS credentials
+* Appropriate IAM permissions
+* Configured AWS region
+* Active AWS account
+
+AWS credentials are **not required for mock/offline mode**.
+
+---
+
+# 📦 Build the Project
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/sahilvats327/CloudSentry.git
 cd CloudSentry
 ```
 
-Build the project using Maven:
+Build the project:
 
 ```bash
 mvn clean compile
@@ -341,41 +490,57 @@ mvn clean compile
 
 ---
 
-# Run CloudSentry
+# ▶️ Running CloudSentry
 
 ## Mock Scan
 
-Run an offline security scan using simulated AWS data:
+Run the offline scanner:
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.arguments="scan --mock"
 ```
 
-This mode allows the complete scanning pipeline to be demonstrated without accessing AWS.
+For a security-focused mock scan:
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments="scan --security --mock"
+```
+
+Mock mode allows the scanning, risk evaluation, and reporting pipeline to be tested without requiring a live AWS environment.
 
 ---
 
-## Run Tests
+## AWS Scan
 
-Run the automated tests using:
+For live AWS scanning, configure valid AWS credentials and required permissions.
+
+Then execute the appropriate CloudSentry scan command.
+
+> Live AWS scanning may require additional permissions depending on the services and checks being analyzed.
+
+---
+
+# 🧪 Running Tests
+
+Run the automated test suite:
 
 ```bash
 mvn test
 ```
 
-The project includes unit tests for components such as the Risk Engine.
+The project includes unit testing for components such as the **Risk Engine** and risk evaluation logic.
 
 ---
 
-# Security Reports
+# 📄 Security Reports
 
-CloudSentry produces structured security results that can be used for analysis and reporting.
+CloudSentry produces structured security results through both machine-readable and human-readable reports.
 
 ## JSON Report
 
-The JSON report provides machine-readable scan results.
+The JSON report contains structured scan information.
 
-Example structure:
+Example:
 
 ```json
 {
@@ -387,21 +552,21 @@ Example structure:
 }
 ```
 
-The JSON format makes the results suitable for:
+JSON reports can be useful for:
 
 * Automation
-* Further analysis
+* Security analysis
 * CI/CD integrations
-* Security dashboards
+* Dashboards
 * External tools
 
 ---
 
 ## HTML Report
 
-CloudSentry also provides an HTML-based security report.
+CloudSentry also generates an HTML-based security report.
 
-The report presents the scan results in a human-readable format, including:
+The report provides a human-readable view of the scan, including:
 
 * Executive summary
 * Security score
@@ -411,16 +576,22 @@ The report presents the scan results in a human-readable format, including:
 * Recommendations
 * Scan information
 
-This makes the results easier to understand during security reviews and project demonstrations.
+The HTML report is useful for:
+
+* Security reviews
+* Project demonstrations
+* Presentations
+* Manual analysis
+* Sharing scan results
 
 ---
 
-# Example Scan Flow
+# 🔄 Example Scan Flow
 
 ```text
 User
  |
- |  scan --mock
+ |  scan --security --mock
  v
 ScanCommand
  |
@@ -436,6 +607,12 @@ ScanService
  +---- VPC Scanner
  |
  +---- Cost Scanner
+ |
+ +---- Reliability Scanner
+          |
+          +---- RDS Multi-AZ
+          +---- S3 Lifecycle
+          +---- EC2 Auto Scaling
  |
  v
 Security Findings
@@ -460,70 +637,92 @@ Console Output    ReportService
 
 ---
 
-# Security Finding Model
+# 🔎 Security Finding Model
 
-Each security finding contains information used to explain and prioritize a potential risk.
+Each CloudSentry finding contains structured information used to explain and prioritize a potential risk.
 
 Typical finding information includes:
 
+* Finding ID
 * Resource
-* Service
+* AWS service
 * Finding title
 * Description
 * Severity
 * Recommendation
 * Security impact
 
-This structure allows CloudSentry to maintain consistent findings across different AWS services.
+Examples of reliability finding IDs include:
+
+```text
+CS-REL-001  → RDS Multi-AZ
+CS-REL-002  → S3 Lifecycle
+CS-REL-003  → EC2 Auto Scaling
+```
+
+Using a common `SecurityFinding` model allows different scanners to produce consistent results.
 
 ---
 
-# Automation
+# 🤖 Automation
 
-CloudSentry is designed as a CLI application so that security scanning can be integrated into automated workflows.
+CloudSentry is designed as a CLI application, making it suitable for automated security workflows.
 
 CLI exit codes can be used by automation systems to determine whether security issues were detected.
 
-Potential future integrations include:
+Potential integrations include:
 
 * CI/CD pipelines
 * GitHub Actions
 * Jenkins
-* Scheduled security scans
-* Cloud security dashboards
+* Scheduled scans
+* Security dashboards
 * Automated compliance checks
 
 ---
 
-# Development Approach
+# 🧩 Development Approach
 
-CloudSentry follows a modular scanner architecture.
+CloudSentry follows a **modular scanner architecture**.
 
-Each AWS service has its own scanner responsible for performing service-specific security checks.
+Each scanning area has dedicated logic responsible for service-specific analysis.
 
 ```text
-Scanner
-   |
-   +---- IAM
-   +---- S3
-   +---- EC2
-   +---- VPC
-   +---- COST
+CloudSentry
+    |
+    +---- IAM
+    |
+    +---- S3
+    |
+    +---- EC2
+    |
+    +---- VPC
+    |
+    +---- COST
+    |
+    +---- RELIABILITY
+             |
+             +---- RDS Multi-AZ
+             +---- S3 Lifecycle
+             +---- EC2 Auto Scaling
 ```
 
-Mock scanners provide equivalent offline implementations for development and demonstrations.
+Mock scanners provide offline implementations for development and demonstrations.
 
 This architecture makes it easier to:
 
 * Add new AWS services
 * Add new security checks
+* Add reliability checks
 * Test scanners independently
-* Run scans without AWS access
-* Extend the project for future automation
+* Run demonstrations without AWS
+* Extend the project for automation
+* Improve risk evaluation
+* Generate consistent reports
 
 ---
 
-# Future Improvements
+# 🚧 Future Improvements
 
 Potential future improvements include:
 
@@ -532,23 +731,26 @@ Potential future improvements include:
 * CloudTrail security analysis
 * CloudWatch security monitoring
 * Automated remediation
-* Compliance frameworks
 * CIS benchmark mapping
+* Compliance framework support
 * Continuous security monitoring
 * CI/CD integration
 * GitHub Actions integration
 * Email security alerts
 * Improved cost anomaly detection
-* More advanced risk scoring
+* Advanced risk scoring
 * Interactive security dashboards
 * Historical scan comparison
 * Multi-region scanning
+* AI-assisted security recommendations
+* Reliability scoring
+* Availability and resilience trend analysis
 
 ---
 
-# Disclaimer
+# ⚠️ Disclaimer
 
-CloudSentry is an educational and security-auditing project designed to help identify potentially insecure AWS configurations.
+CloudSentry is an educational and security-auditing project designed to help identify potentially insecure AWS configurations and reliability risks.
 
 It should not be considered a replacement for a professional cloud security platform or a complete AWS security audit.
 
@@ -556,11 +758,11 @@ Always review findings before making changes to production infrastructure.
 
 ---
 
-# Project Status
+# 📌 Project Status
 
-**Current status: Active Development**
+**Status: Active Development**
 
-CloudSentry currently supports security analysis across:
+Current CloudSentry scanning areas:
 
 ```text
 IAM
@@ -568,14 +770,42 @@ S3
 EC2
 VPC
 COST
+RELIABILITY
 ```
 
-with both **AWS scanning** and **offline/mock scanning** capabilities.
+Reliability analysis currently includes:
+
+```text
+RDS Multi-AZ
+S3 Lifecycle
+EC2 Auto Scaling
+```
+
+CloudSentry currently supports:
+
+* **AWS-based scanning**
+* **Offline/mock scanning**
+* **Centralized risk evaluation**
+* **Security scoring**
+* **JSON reporting**
+* **HTML reporting**
+
+The project is being developed toward a more comprehensive **cloud security, reliability, and automation platform**.
 
 ---
 
-# Author
+# 👨‍💻 Author
 
 **Sahil Vats**
 
-CloudSentry was developed as a cloud security project using Java, Spring Boot, AWS SDK for Java, and Picocli.
+CloudSentry was developed as a cloud security and reliability project using:
+
+**Java · Spring Boot · AWS SDK for Java · Picocli · Maven**
+
+GitHub:
+
+https://github.com/sahilvats327/CloudSentry
+
+---
+
+⭐ If you find the project interesting, consider giving the repository a star.
