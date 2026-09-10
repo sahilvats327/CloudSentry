@@ -84,11 +84,17 @@ private String severity;
         description = "Run only Cost optimization checks"
 )
 private boolean cost;
+
+@Option(
+        names = "--reliability",
+        description = "Run only Reliability checks"
+)
+private boolean reliability;
     
     @Override
 public Integer call() {
 
-    boolean targetedScan = s3 || iam || ec2 || vpc || cost;
+   boolean targetedScan = s3 || iam || ec2 || vpc || cost || reliability;
 
     if (targetedScan && !security) {
 
@@ -156,6 +162,7 @@ if (cost) {
     if (targets.length() > 0) {
         targets.append(", ");
     }
+
     targets.append("COST");
 }
 
@@ -166,8 +173,9 @@ if (cost) {
 } else {
 
     System.out.println(
-            "Targets:    S3, IAM, EC2, VPC, COST"
+            "Targets:    S3, IAM, EC2, VPC, COST, RELIABILITY"
     );
+
 }
 
 System.out.println("----------------------------------------");
@@ -180,6 +188,7 @@ System.out.println("----------------------------------------");
         ec2,
         vpc,
         cost,
+        reliability,
         region,
         mock,
         severity

@@ -1,0 +1,133 @@
+[ {
+  "check" : "S3 Public Access",
+  "status" : "PASS",
+  "severity" : "NONE",
+  "message" : "Public access is blocked",
+  "recommendation" : "No action required. Continue enforcing S3 Block Public Access."
+}, {
+  "check" : "S3 Encryption",
+  "status" : "PASS",
+  "severity" : "NONE",
+  "message" : "Server-side encryption is enabled",
+  "recommendation" : "No action required. Continue using server-side encryption."
+}, {
+  "check" : "S3 Versioning",
+  "status" : "WARNING",
+  "severity" : "LOW",
+  "message" : "Bucket versioning is disabled",
+  "recommendation" : "Enable bucket versioning to help recover from accidental deletion or object overwrites."
+}, {
+  "check" : "S3 Logging",
+  "status" : "WARNING",
+  "severity" : "MEDIUM",
+  "message" : "Bucket logging is disabled",
+  "recommendation" : "Enable appropriate logging and monitoring to improve security auditing and visibility."
+}, {
+  "check" : "IAM MFA - cloudsentry-readonlyproj",
+  "status" : "WARNING",
+  "severity" : "MEDIUM",
+  "message" : "MFA is not enabled for this IAM user",
+  "recommendation" : "Enable MFA for the IAM user to reduce the risk of account compromise."
+}, {
+  "check" : "IAM Access Key Age - cloudsentry-readonlyproj",
+  "status" : "PASS",
+  "severity" : "NONE",
+  "message" : "Access key age is within the recommended 90-day rotation period",
+  "recommendation" : "Continue rotating access keys regularly."
+}, {
+  "check" : "IAM Group Policies - cloudsentry-readonlyproj",
+  "status" : "PASS",
+  "severity" : "NONE",
+  "message" : "IAM user is not a member of any group",
+  "recommendation" : "No group-based permissions were found for this user."
+}, {
+  "check" : "IAM MFA - SAHILVATS",
+  "status" : "PASS",
+  "severity" : "NONE",
+  "message" : "MFA is enabled for this IAM user",
+  "recommendation" : "No action required. Continue enforcing MFA."
+}, {
+  "check" : "IAM Access Key Age - SAHILVATS",
+  "status" : "WARNING",
+  "severity" : "MEDIUM",
+  "message" : "An access key is older than 90 days",
+  "recommendation" : "Rotate or replace old access keys regularly and remove unused keys."
+}, {
+  "check" : "IAM Policy Analysis - SAHILVATS",
+  "status" : "WARNING",
+  "severity" : "HIGH",
+  "message" : "Policy 'AdministratorAccess' contains Action '*' which grants unrestricted API actions",
+  "recommendation" : "Replace wildcard actions with only the specific AWS actions required by the user."
+}, {
+  "check" : "IAM Group Policies - SAHILVATS",
+  "status" : "PASS",
+  "severity" : "NONE",
+  "message" : "IAM user is not a member of any group",
+  "recommendation" : "No group-based permissions were found for this user."
+}, {
+  "check" : "IAM Password Policy",
+  "status" : "WARNING",
+  "severity" : "MEDIUM",
+  "message" : "No account password policy is configured",
+  "recommendation" : "Configure and enforce a strong IAM password policy if IAM console passwords are used."
+}, {
+  "check" : "EC2 Security Group - SGForALB - HTTP (80)",
+  "status" : "WARNING",
+  "severity" : "LOW",
+  "message" : "HTTP port 80 is publicly accessible from 0.0.0.0/0.",
+  "recommendation" : "Consider redirecting HTTP traffic to HTTPS and restricting unnecessary public access."
+}, {
+  "check" : "EC2 Security Group - MYFirstSGforASG - SSH (22)",
+  "status" : "WARNING",
+  "severity" : "HIGH",
+  "message" : "SSH port 22 is publicly accessible from 0.0.0.0/0.",
+  "recommendation" : "Restrict SSH access to trusted IP addresses or VPN networks."
+}, {
+  "check" : "EC2 Security Group - launch-wizard-1 - HTTP (80)",
+  "status" : "WARNING",
+  "severity" : "LOW",
+  "message" : "HTTP port 80 is publicly accessible from 0.0.0.0/0.",
+  "recommendation" : "Consider redirecting HTTP traffic to HTTPS and restricting unnecessary public access."
+}, {
+  "check" : "EC2 Security Group - launch-wizard-1 - SSH (22)",
+  "status" : "WARNING",
+  "severity" : "HIGH",
+  "message" : "SSH port 22 is publicly accessible from 0.0.0.0/0.",
+  "recommendation" : "Restrict SSH access to trusted IP addresses or VPN networks."
+}, {
+  "check" : "EC2 Security Group - launch-wizard-2 - HTTP (80)",
+  "status" : "WARNING",
+  "severity" : "LOW",
+  "message" : "HTTP port 80 is publicly accessible from 0.0.0.0/0.",
+  "recommendation" : "Consider redirecting HTTP traffic to HTTPS and restricting unnecessary public access."
+}, {
+  "check" : "EC2 Security Group - launch-wizard-2 - SSH (22)",
+  "status" : "WARNING",
+  "severity" : "HIGH",
+  "message" : "SSH port 22 is publicly accessible from 0.0.0.0/0.",
+  "recommendation" : "Restrict SSH access to trusted IP addresses or VPN networks."
+}, {
+  "check" : "EC2 EBS Encryption - vol-04f1a6e81d9b56a44",
+  "status" : "WARNING",
+  "severity" : "HIGH",
+  "message" : "EBS volume is not encrypted.",
+  "recommendation" : "Enable EBS encryption to protect data at rest."
+}, {
+  "check" : "EC2 Public IP Exposure - i-0a8058b15a8855bb2",
+  "status" : "WARNING",
+  "severity" : "MEDIUM",
+  "message" : "EC2 instance has a public IPv4 address: 34.205.78.166",
+  "recommendation" : "Remove unnecessary public IP exposure and use private networking where possible."
+}, {
+  "check" : "EC2 IMDS Security - i-0a8058b15a8855bb2",
+  "status" : "PASS",
+  "severity" : "NONE",
+  "message" : "IMDSv2 is required for the EC2 instance.",
+  "recommendation" : "No action required. Continue requiring IMDSv2."
+}, {
+  "check" : "EC2 Termination Protection - i-0a8058b15a8855bb2",
+  "status" : "INFO",
+  "severity" : "LOW",
+  "message" : "API termination protection is not enabled for the EC2 instance.",
+  "recommendation" : "Consider enabling termination protection for important production instances."
+} ]

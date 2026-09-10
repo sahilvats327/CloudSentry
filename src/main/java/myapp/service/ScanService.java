@@ -10,9 +10,10 @@ import myapp.scanner.MockEc2SecurityScanner;
 import myapp.scanner.MockIamSecurityScanner;
 import myapp.scanner.MockS3SecurityScanner;
 import myapp.scanner.MockVpcSecurityScanner;
+import myapp.scanner.MockReliabilitySecurityScanner;
 import myapp.scanner.S3SecurityScanner;
 import myapp.scanner.VpcSecurityScanner;
-
+import myapp.scanner.ReliabilitySecurityScanner;
 
 
 import org.springframework.stereotype.Service;
@@ -35,6 +36,8 @@ public class ScanService {
     private final MockVpcSecurityScanner mockVpcSecurityScanner;
     private final CostSecurityScanner costSecurityScanner;
     private final MockCostSecurityScanner mockCostSecurityScanner;
+    private final ReliabilitySecurityScanner reliabilitySecurityScanner;
+    private final MockReliabilitySecurityScanner mockReliabilitySecurityScanner;
     private final RiskEngine riskEngine;
     private final ReportService reportService;
 
@@ -50,6 +53,8 @@ public class ScanService {
             MockVpcSecurityScanner mockVpcSecurityScanner,
             CostSecurityScanner costSecurityScanner,
             MockCostSecurityScanner mockCostSecurityScanner,
+            MockReliabilitySecurityScanner mockReliabilitySecurityScanner,
+            ReliabilitySecurityScanner reliabilitySecurityScanner,
             RiskEngine riskEngine,
             ReportService reportService
     ) {
@@ -65,6 +70,8 @@ public class ScanService {
         this.mockVpcSecurityScanner = mockVpcSecurityScanner;
         this.costSecurityScanner = costSecurityScanner;
         this.mockCostSecurityScanner = mockCostSecurityScanner;
+        this.reliabilitySecurityScanner = reliabilitySecurityScanner;
+        this.mockReliabilitySecurityScanner = mockReliabilitySecurityScanner;
         this.riskEngine = riskEngine;
         this.reportService = reportService;
     }
@@ -77,6 +84,7 @@ public class ScanService {
         boolean ec2,
         boolean vpc,
         boolean cost,
+        boolean reliability,
         String region,
         boolean mock,
         String severity) {
@@ -115,8 +123,8 @@ public class ScanService {
             List<SecurityFinding> findings =
                     new ArrayList<>();
 
-            boolean targetedScan =
-        s3 || iam || ec2 || vpc || cost;
+           boolean targetedScan =
+        s3 || iam || ec2 || vpc || cost || reliability;
 
             if (targetedScan) {
 
@@ -182,15 +190,16 @@ public class ScanService {
                             )
                     );
                 }
-                if (cost) {
-    System.out.println("COST scan: ENABLED");
+                if (reliability) {
+
+    System.out.println("RELIABILITY scan: ENABLED");
 
     findings.addAll(
             runScanner(
-                    "COST",
+                    "RELIABILITY",
                     mock,
-                    costSecurityScanner::scan,
-                    mockCostSecurityScanner::scan,
+                    reliabilitySecurityScanner::scan,
+                    mockReliabilitySecurityScanner::scan,
                     region
             )
     );
@@ -257,6 +266,16 @@ public class ScanService {
                 region
         )
 );
+
+findings.addAll(
+        runScanner(
+                "RELIABILITY",
+                mock,
+                reliabilitySecurityScanner::scan,
+                mockReliabilitySecurityScanner::scan,
+                region
+        )
+);
             }
 
             // Calculate the overall security risk from ALL findings
@@ -287,7 +306,7 @@ public class ScanService {
 
             String targets;
 
-            if (s3 || iam || ec2 || vpc || cost) {
+           if (s3 || iam || ec2 || vpc || cost || reliability) {
 
                 StringBuilder targetBuilder =
                         new StringBuilder();
@@ -331,12 +350,20 @@ public class ScanService {
 
     targetBuilder.append("COST");
 }
+if (reliability) {
+
+    if (targetBuilder.length() > 0) {
+        targetBuilder.append(", ");
+    }
+
+    targetBuilder.append("RELIABILITY");
+}
 
                 targets = targetBuilder.toString();
 
             } else {
 
-                targets = "S3, IAM, EC2, VPC, COST";
+                targets = "S3, IAM, EC2, VPC, COST, RELIABILITY";
             }
 
             reportService.exportJsonReport(

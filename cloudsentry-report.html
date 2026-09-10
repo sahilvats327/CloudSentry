@@ -1,0 +1,2309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>CloudSentry Security Report</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f4f6f8;
+            color: #1f2937;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .header {
+            background: #111827;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        .header p {
+            margin: 5px 0;
+            color: #d1d5db;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .section h2 {
+            margin-top: 0;
+        }
+
+        .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+}
+
+        .summary-card {
+            padding: 20px;
+            border-radius: 10px;
+            background: #f9fafb;
+            text-align: center;
+        }
+
+        .summary-card .count {
+            display: block;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .high {
+            border-left: 6px solid #dc2626;
+        }
+
+        .medium {
+            border-left: 6px solid #f59e0b;
+        }
+
+        .low {
+            border-left: 6px solid #2563eb;
+        }
+
+        .pass {
+            border-left: 6px solid #16a34a;
+        }
+        .info {
+    border-left: 6px solid #6b7280;
+}
+
+.badge-info {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+        .service-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(5, 1fr);
+    gap: 15px;
+}
+
+        .service-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .service-card h3 {
+            margin-top: 0;
+        }
+
+        .service-count {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .finding {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 15px;
+        }
+
+        .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .finding-id {
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-low {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-pass {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .score-panel {
+    margin-top: 25px;
+    padding: 22px;
+    border-radius: 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    width: 100%;
+    display: block;
+}
+
+.score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.score-value {
+    font-size: 34px;
+    font-weight: bold;
+}
+
+.score-bar {
+    width: 100%;
+    height: 14px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.score-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.risk-high {
+    background: #dc2626;
+}
+
+.risk-medium {
+    background: #f59e0b;
+}
+
+.risk-low {
+    background: #2563eb;
+}
+
+.risk-secure {
+    background: #16a34a;
+}
+
+.risk-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.metadata-card {
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.metadata-label {
+    display: block;
+    color: #6b7280;
+    font-size: 12px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.metadata-value {
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+        .finding p {
+            margin: 8px 0;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            color: #6b7280;
+            padding: 20px;
+        }
+
+       @media (max-width: 900px) {
+    .summary-grid,
+    .service-grid,
+    .metadata-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+        @media (max-width: 500px) {
+            .summary-grid,
+            .service-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+
+    <div class="header">
+
+        <h1>CloudSentry Security Report</h1>
+
+        <p>
+            <strong>Scan Mode:</strong>
+            <span>MOCK / OFFLINE</span>
+        </p>
+
+        <p>
+            <strong>Region:</strong>
+            <span>ap-south-1</span>
+        </p>
+
+        <p>
+            <strong>Targets:</strong>
+            <span>S3, IAM, EC2, VPC, COST, RELIABILITY</span>
+        </p>
+
+        <p>
+            <strong>Generated:</strong>
+            <span>2026-09-10T16:35:42.655455100Z</span>
+        </p>
+
+    </div>
+
+
+    <!-- Executive Summary -->
+
+    <div class="section">
+
+        <h2>Executive Summary</h2>
+
+        <div class="summary-grid">
+
+            <div class="summary-card high">
+
+                <span class="count">17</span>
+
+                <strong>HIGH</strong>
+
+            </div>
+
+
+            <div class="summary-card medium">
+
+                <span class="count">20</span>
+
+                <strong>MEDIUM</strong>
+
+            </div>
+
+
+            <div class="summary-card low">
+
+                <span class="count">3</span>
+
+                <strong>LOW</strong>
+
+            </div>
+
+
+            <div class="summary-card pass">
+
+                <span class="count">11</span>
+
+                <strong>PASS</strong>
+
+            </div>
+
+           <div class="summary-card info">
+
+    <span class="count">1</span>
+
+    <strong>INFO</strong>
+
+</div>
+
+</div>
+
+<br>
+
+        <p>
+            <strong>Total Findings:</strong>
+            <span>52</span>
+        </p>
+
+        <p>
+            <strong>Displayed Findings:</strong>
+            <span>52</span>
+        </p>
+
+        <div class="score-panel" style="border: 5px solid red !important;">
+
+    <div class="score-header">
+
+        <span>
+            <strong>Security Score</strong>
+        </span>
+
+        <span class="score-value">40/100</span>
+
+    </div>
+
+    <div class="score-bar">
+
+        <div class="score-fill  risk-high"
+             style="width:40%">
+        </div>
+
+    </div>
+
+    <br>
+
+    <strong>Risk Level:</strong>
+
+    <span class="risk-badge  risk-high">HIGH</span>
+
+</div>
+
+       </div>
+</div>
+
+<!-- Scan Metadata -->
+
+<div class="section">
+    <h2>Scan Details</h2>
+
+    <div class="metadata-grid">
+
+        <div class="metadata-card">
+
+            <span class="metadata-label">
+                Mode
+            </span>
+
+            <span class="metadata-value">MOCK / OFFLINE</span>
+
+        </div>
+
+        <div class="metadata-card">
+
+            <span class="metadata-label">
+                Region
+            </span>
+
+            <span class="metadata-value">ap-south-1</span>
+
+        </div>
+
+        <div class="metadata-card">
+
+            <span class="metadata-label">
+                Targets
+            </span>
+
+            <span class="metadata-value">S3, IAM, EC2, VPC, COST, RELIABILITY</span>
+
+        </div>
+
+        <div class="metadata-card">
+
+            <span class="metadata-label">
+                Total Findings
+            </span>
+
+            <span class="metadata-value">52</span>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <!-- Service Breakdown -->
+
+    <div class="section">
+
+        <h2>Findings by Service</h2>
+
+        <div class="service-grid">
+
+            <div class="service-card">
+
+                <h3>S3</h3>
+
+                <div class="service-count">9</div>
+
+                <p>Findings</p>
+
+            </div>
+
+
+            <div class="service-card">
+
+                <h3>IAM</h3>
+
+                <div class="service-count">13</div>
+
+                <p>Findings</p>
+
+            </div>
+
+
+            <div class="service-card">
+
+                <h3>EC2</h3>
+
+                <div class="service-count">12</div>
+
+                <p>Findings</p>
+
+            </div>
+
+
+                        <div class="service-card">
+
+                <h3>VPC</h3>
+
+                <div class="service-count">8</div>
+
+                <p>Findings</p>
+
+            </div>
+
+
+            <div class="service-card">
+
+    <h3>COST</h3>
+
+    <div class="service-count">7</div>
+
+    <p>Findings</p>
+
+</div>
+
+<div class="service-card">
+
+    <h3>RELIABILITY</h3>
+
+    <div class="service-count">3</div>
+
+    <p>Findings</p>
+
+</div>
+
+               </div>
+
+    </div>
+
+
+    <!-- Findings by Severity -->
+
+    <div class="section">
+
+        <h2>Findings by Severity</h2>
+
+
+        <!-- HIGH -->
+
+        <h3>HIGH</h3>
+
+        
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-001</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Bucket Public Access</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Bucket demo-public-bucket allows public access.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Block public access unless explicitly required.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-006</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Bucket Policy Public Access</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Bucket policy contains an Allow statement with a public Principal.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove unrestricted public principals unless public access is explicitly required. Restrict access to specific AWS accounts, roles, or services.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-009</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Public Write/Delete Access</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Bucket demo-public-bucket allows public write access through its bucket policy.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove public write/delete permissions and restrict access to trusted principals and only the actions required.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-001</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Root Account MFA</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Root account does not have MFA enabled.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Enable MFA on the AWS root account.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-006</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Inline Policy Analysis - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Inline policy contains unrestricted permissions.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Restrict actions and resources to only what is required.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-007</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Policy Analysis - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Attached policy contains wildcard permissions.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Replace wildcard permissions with least-privilege permissions.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-010</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM AdministratorAccess - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>IAM user has the AWS-managed AdministratorAccess policy attached.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove AdministratorAccess and replace it with a least-privilege policy containing only the permissions required.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-013</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Privilege Escalation Risk - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>IAM policy contains a privilege-sensitive action such as iam:PassRole.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Restrict privilege-sensitive IAM actions to only the identities and resources that require them.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-001</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Security Group Public Access</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Security group allows SSH access from the public internet.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Restrict SSH access to trusted IP addresses or trusted network ranges.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-006</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Public EBS Snapshot - snap-0123456789abcdef0</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>An EBS snapshot is publicly restorable.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove public access from the snapshot unless public sharing is explicitly required.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-008</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Public Sensitive Port - sg-demo123:3389</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>RDP port 3389 is publicly accessible from 0.0.0.0/0.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Restrict RDP access to trusted IP ranges or private networks and avoid exposing sensitive services directly to the internet.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-010</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Public IPv6 Access - sg-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Security group sg-demo123 allows inbound IPv6 traffic from the entire internet (::/0).</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Restrict IPv6 access to trusted IPv6 CIDR ranges and expose only the ports required by the workload.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-011</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Public AMI - ami-0123456789abcdef0</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>AMI ami-0123456789abcdef0 is publicly accessible and can be launched by other AWS users.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove public sharing from the AMI unless public distribution is explicitly required.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-012</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Unencrypted EBS Volume - vol-demo456</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>EBS volume vol-demo456 is not encrypted.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Enable encryption for the EBS volume and use encrypted volumes for sensitive workloads.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-VPC-003</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>VPC Default Security Group - sg-default123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>The default security group sg-default123 allows inbound traffic from the public internet.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove public inbound rules from the default security group and use dedicated least-privilege security groups for workloads.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-VPC-004</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>VPC Public Network ACL - acl-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Network ACL acl-demo123 allows inbound IPv4 traffic from 0.0.0.0/0.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Restrict inbound Network ACL rules to trusted CIDR ranges and deny unnecessary internet access.</span>
+            </p>
+
+        </div>
+
+        <div class="finding high">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-VPC-006</span>
+
+                <span class="badge badge-high">
+                    HIGH
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>VPC Public IPv6 Route - rtb-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Route table rtb-demo123 sends all IPv6 traffic (::/0) through Internet Gateway igw-demo123.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Use IPv6 Internet Gateway routes only for intentionally public subnets and keep sensitive workloads on private or egress-only IPv6 paths.</span>
+            </p>
+
+        </div>
+
+
+        <!-- MEDIUM -->
+
+        <h3>MEDIUM</h3>
+
+        
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-003</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Bucket Versioning</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Bucket demo-data-bucket does not have versioning enabled.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Enable S3 bucket versioning to improve data recovery.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-007</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Cross-Account Access</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Bucket policy grants access to an explicit AWS account principal.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Verify that cross-account access is intentional and restrict permissions to only the required AWS accounts, roles, or resources.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-008</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Object Ownership</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>S3 Object Ownership is not configured as BucketOwnerEnforced.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Configure S3 Object Ownership as BucketOwnerEnforced to eliminate ACL-based ownership issues where compatible.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-003</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM MFA - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>IAM user does not have MFA enabled.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Enable MFA for the IAM user.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-004</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Access Key Age - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Access key is older than 90 days.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Rotate the access key.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-009</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Password Policy</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Password policy does not meet the recommended security requirements.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Configure a strong IAM password policy.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-011</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Multiple Active Access Keys - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>IAM user has multiple active access keys.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove unused access keys and keep only the credentials required for the user&#39;s workload.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-012</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Inactive Access Key - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>IAM user has an inactive access key.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove inactive access keys when they are no longer required.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-003</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Public IP Exposure - i-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>EC2 instance i-demo123 has a public IPv4 address: 203.0.113.10</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Remove unnecessary public IP exposure and use private networking where possible.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-004</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 IMDS Security - i-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>IMDSv2 is not required for EC2 instance i-demo123.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Configure the instance metadata service to require IMDSv2.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-007</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Unencrypted EBS Snapshot - snap-0987654321abcdef0</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>An EBS snapshot is not encrypted.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Use encrypted EBS snapshots to protect stored data and reduce the risk of unauthorized data exposure.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-VPC-001</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>VPC Public Subnet - subnet-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Subnet subnet-demo123 uses a route table with an active default route to an Internet Gateway.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Keep sensitive workloads in private subnets and expose only resources that require direct internet connectivity.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-VPC-005</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>VPC Flow Logs - vpc-demo456</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>No active VPC Flow Log configuration was detected for VPC vpc-demo456.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Enable VPC Flow Logs for this VPC to improve network visibility, investigation, and security monitoring.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-COST-001</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>Unattached EBS Volume - vol-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>EBS volume vol-demo123 is not attached to any EC2 instance and may continue generating storage costs.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Review the volume and delete it if it is no longer required. Create a snapshot first if the data must be retained.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-COST-002</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>Unused Elastic IP - 203.0.113.10</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Elastic IP 203.0.113.10 is not associated with an EC2 instance and may generate unnecessary AWS charges.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Release the Elastic IP if it is no longer required.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-COST-002</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>Elastic IP on Stopped Instance - 203.0.113.30</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Elastic IP 203.0.113.30 is associated with stopped EC2 instance i-demo456 and may be generating unnecessary AWS charges.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Review whether the stopped instance and its Elastic IP are still required. Release the Elastic IP if it is no longer needed.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-COST-003</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>Long-Stopped EC2 Instance - i-demo456</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>EC2 instance i-demo456 has remained stopped for approximately 47 days.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Review the instance and terminate it if it is no longer required. Preserve required data or AMIs before termination.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-REL-001</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>RDS Multi-AZ Disabled - mock-db-01</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>RDS instance mock-db-01 does not have Multi-AZ deployment enabled.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Enable Multi-AZ deployment for production RDS workloads that require high availability.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-REL-002</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Lifecycle Policy Missing - mock-bucket-01</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>S3 bucket mock-bucket-01 does not have a lifecycle policy configured.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Configure an appropriate S3 lifecycle policy to manage object retention and storage costs.</span>
+            </p>
+
+        </div>
+
+        <div class="finding medium">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-REL-003</span>
+
+                <span class="badge badge-medium">
+                    MEDIUM
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Instance Not in Auto Scaling Group - i-0mock123456789</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>EC2 instance i-0mock123456789 is not currently a member of an Auto Scaling Group.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>For workloads requiring high availability and automatic recovery, consider placing the instance in an appropriate Auto Scaling Group.</span>
+            </p>
+
+        </div>
+
+
+        <!-- LOW -->
+
+        <h3>LOW</h3>
+
+        
+
+        <div class="finding low">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-004</span>
+
+                <span class="badge badge-low">
+                    LOW
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Bucket Logging</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Access logging is not enabled for bucket demo-data-bucket.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Enable S3 access logging where audit requirements justify it.</span>
+            </p>
+
+        </div>
+
+        <div class="finding low">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-005</span>
+
+                <span class="badge badge-low">
+                    LOW
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Termination Protection - i-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>API termination protection is not enabled for EC2 instance i-demo123.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Consider enabling termination protection for important production instances.</span>
+            </p>
+
+        </div>
+
+        <div class="finding low">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-009</span>
+
+                <span class="badge badge-low">
+                    LOW
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 Unrestricted Outbound Traffic - sg-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>WARNING</span>
+            </p>
+
+            <p>
+                <span class="label">Issue:</span>
+                <span>Security group sg-demo123 allows outbound traffic to 0.0.0.0/0.</span>
+            </p>
+
+            <p>
+                <span class="label">Recommendation:</span>
+                <span>Restrict outbound traffic to only the destinations and protocols required by the workload.</span>
+            </p>
+
+        </div>
+
+
+        <!-- PASS -->
+
+        <h3>PASS</h3>
+
+        
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-002</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 Bucket Encryption</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>Bucket demo-secure-bucket has server-side encryption enabled.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-S3-005</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>S3 HTTPS Enforcement</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>Bucket policy requires secure transport.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-002</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Root Access Keys</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>No root account access keys detected.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-005</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Access Key Usage - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>Access key has been used recently.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-IAM-008</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>IAM Group Policies - demo-user</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>No dangerous group policy permissions detected.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-EC2-002</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EC2 EBS Encryption - vol-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>EBS volume vol-demo123 is encrypted.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-VPC-005</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>VPC Flow Logs - vpc-demo123</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>An active VPC Flow Log configuration was detected for VPC vpc-demo123.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-VPC-005</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>VPC Flow Logs - vpc-demo789</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>An active VPC Flow Log configuration was detected for VPC vpc-demo789.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-COST-001</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>EBS Volume - vol-demo456</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>EBS volume vol-demo456 is attached to an EC2 instance.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-COST-002</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>Elastic IP - 203.0.113.20</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>Elastic IP 203.0.113.20 is associated with running EC2 instance i-demo123.</span>
+            </p>
+
+        </div>
+
+        <div class="finding pass">
+
+            <div class="finding-header">
+
+                <span class="finding-id">CS-COST-003</span>
+
+                <span class="badge badge-pass">
+                    PASS
+                </span>
+
+            </div>
+
+            <p>
+                <span class="label">Check:</span>
+                <span>Stopped EC2 Instance - i-demo789</span>
+            </p>
+
+            <p>
+                <span class="label">Status:</span>
+                <span>PASS</span>
+            </p>
+
+            <p>
+                <span class="label">Message:</span>
+                <span>EC2 instance i-demo789 has been stopped for approximately 8 days, which is below the configured threshold of 30 days.</span>
+            </p>
+
+        </div>
+
+        <!-- INFO -->
+
+<h3>INFO</h3>
+
+
+
+<div class="finding info">
+
+    <div class="finding-header">
+
+        <span class="finding-id">CS-VPC-002</span>
+
+        <span class="badge badge-info">
+            INFO
+        </span>
+
+    </div>
+
+    <p>
+        <span class="label">Check:</span>
+        <span>VPC Internet Gateway - igw-demo123</span>
+    </p>
+
+    <p>
+        <span class="label">Status:</span>
+        <span>INFO</span>
+    </p>
+
+    <p>
+        <span class="label">Issue:</span>
+        <span>VPC vpc-demo123 has an attached Internet Gateway igw-demo123, enabling internet connectivity.</span>
+    </p>
+
+    <p>
+        <span class="label">Recommendation:</span>
+        <span>Verify that only intended public subnets and resources use internet-facing routes through this gateway.</span>
+    </p>
+
+</div>
+
+    </div>
+
+
+    <div class="footer">
+
+        CloudSentry — AWS Cloud Security Scanner
+
+    </div>
+
+</div>
+
+</body>
+</html>

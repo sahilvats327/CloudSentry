@@ -411,6 +411,17 @@ serviceCounts.put(
                 .count()
 );
 
+serviceCounts.put(
+        "RELIABILITY",
+        findings.stream()
+                .filter(f ->
+                        f.getId() != null
+                                && f.getId()
+                                .startsWith("CS-REL-")
+                )
+                .count()
+);
+
 context.setVariable(
         "serviceCounts",
         serviceCounts

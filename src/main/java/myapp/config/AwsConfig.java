@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.iam.IamClient;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.rds.RdsClient;
 
 @Configuration
 public class AwsConfig {
@@ -24,6 +25,11 @@ public class AwsConfig {
     public Ec2Client ec2Client() {
         return Ec2Client.create();
     }
+
+    @Bean
+public RdsClient rdsClient() {
+    return RdsClient.create();
+}
 
     @Bean
     public ObjectMapper objectMapper() {

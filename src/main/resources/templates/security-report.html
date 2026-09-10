@@ -175,7 +175,7 @@
     background: #f9fafb;
     border: 1px solid #e5e7eb;
     width: 100%;
-
+    display: block;
 }
 
 .score-header {
@@ -251,6 +251,7 @@
 
 .metadata-value {
     font-weight: bold;
+    overflow-wrap: anywhere;
 }
 
         .finding p {
@@ -377,7 +378,10 @@
     <strong>INFO</strong>
 
 </div>
-        <br>
+
+</div>
+
+<br>
 
         <p>
             <strong>Total Findings:</strong>
@@ -389,7 +393,7 @@
             <span th:text="${findings.size()}"></span>
         </p>
 
-        <div class="score-panel">
+        <div class="score-panel" style="border: 5px solid red !important;">
 
     <div class="score-header">
 
@@ -427,12 +431,12 @@
 
 </div>
 
-    </div>
+       </div>
+</div>
 
-    <!-- Scan Metadata -->
+<!-- Scan Metadata -->
 
 <div class="section">
-
     <h2>Scan Details</h2>
 
     <div class="metadata-grid">
@@ -551,15 +555,29 @@
 
             <div class="service-card">
 
-                <h3>COST</h3>
+    <h3>COST</h3>
 
-                <div class="service-count"
-                     th:text="${serviceCounts['COST']}">
-                </div>
+    <div class="service-count"
+         th:text="${serviceCounts['COST']}">
+        0
+    </div>
 
-                <p>Findings</p>
+    <p>Findings</p>
 
-            </div>
+</div>
+
+<div class="service-card">
+
+    <h3>RELIABILITY</h3>
+
+    <div class="service-count"
+         th:text="${serviceCounts['RELIABILITY']}">
+        0
+    </div>
+
+    <p>Findings</p>
+
+</div>
 
                </div>
 
